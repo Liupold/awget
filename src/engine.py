@@ -1,43 +1,65 @@
-import requests as reqst
-from multiprocessing import Pool
+"""
+This Module contains the download engine for
+`aget` (accelerated wget)
+
+Contains The Following Class:
+    * Engine
+"""
+
 from threading import Thread, Lock
-from hashlib import md5; import base64
+from hashlib import md5
 import os
+import base64
+import requests as reqst
 
-from time import sleep
 
-class Engine():
+class HttpEngine():
     """
-    Para Downloader Engine.
+    Parallel Downloader Engine.
     """
-    def __init__(self, URL:str, PartFilePath:str, UserAgent: str, \
-            MaxConnection=8, MaxTries=10):
-        self.url = URL
+    # pylint: disable=too-many-instance-attributes
+
+    def __init__(self, url: str, partpath: str, useragent: str,
+                 MaxConnection=8, MaxTries=10):
+        # pylint: disable=too-many-arguments
+        self.url = url
         self.max_conn = MaxConnection
-        self.partpath = PartFilePath # for part files
-        self.agent = UserAgent
+        self.max_tries = MaxTries
+        self.partpath = partpath  # for part files
+        self.agent = useragent
         self.session = reqst.Session()
-        self.session.headers = {'User-Agent': UserAgent}
-        self.done = 0 # done
-        self.chunkable = None # Will be initialised later
+        self.session.headers = {'User-Agent': useragent}
+        self.done = 0  # done
+        self.chunkable = None  # Will be initialised later
         self.threads = []
         self.lock = Lock()
-        self.__prepared = 0 # Make sure it's prepared.
-        self.__killed = False # threads will check this
-        self.__partpaths = [] #name of all the part files
+        self.__prepared = 0  # Make sure it's prepared.
+        self.__killed = False  # threads will check this
+        self.__partpaths = []  # name of all the part files
         self.size = None
+        self.part_prefix = None
         self.chunk_size = None
-
+        self.length = None
 
     def prepare(self):
+        """
+        This prepare the downloader for download
+        - This must be ran before downloading
+        - or the downloader will run this if not ran by user.
+        - this provide more fine control over the download process.
+        *this is blocking by nature.*
+        returns:
+            True after preparation
+        """
         self.part_prefix = \
-                base64.b64encode(md5(self.url.encode()).\
-                digest(), b'..').decode('utf-8')
+            base64.b64encode(md5(self.url.encode()).
+                             digest(), b'..').decode('utf-8')
 
         req = self.session.get(self.url, stream=True)
+
         if 'Content-Length' in req.headers:
             self.length = int(req.headers['Content-Length'])
-            self.chunkable = True if 'Accept-Ranges' in req.headers else False
+            self.chunkable = 'Accept-Ranges' in req.headers
             if self.chunkable:
                 self.chunk_size = self.length // self.max_conn
         else:
@@ -46,14 +68,14 @@ class Engine():
         req.close()
 
         if self.chunk_size is not None:
-            # calculate the ramges
-            for conn_num in range(self.max_conn):
-                upper = self.length - (conn_num * self.chunk_size)
+            # calculate the ranges
+            for part_number in range(self.max_conn):
+                upper = self.length - (part_number * self.chunk_size)
                 lower = upper - self.chunk_size + 1
-                partpath = os.path.join(self.partpath, \
-                        f'{self.part_prefix}.{conn_num}.part')
+                partpath = os.path.join(
+                    self.partpath, f'{self.part_prefix}.{part_number}.part')
                 self.__partpaths.append(partpath)
-                if conn_num == (self.max_conn -  1):
+                if part_number == (self.max_conn - 1):
                     lower = 0
                 # resume
                 if os.path.isfile(partpath):
@@ -61,96 +83,124 @@ class Engine():
                     if file_length < (upper - lower):
                         lower += file_length
                         self.done += file_length
-                    elif (file_length == upper - lower + 1) or \
-                            (file_length == upper - lower):
+                    elif file_length in (upper - lower + 1, upper - lower):
                         # this means the part is completed
                         self.done += file_length
-                        continue # do not append to thread
+                        continue  # do not append to self.threads
                     else:
                         raise RuntimeError("File Corrupted!")
-                self.threads.append(Thread(target=self.__download_chunk, \
-                        args=(partpath, (lower, upper)), daemon=True))
+                self.threads.append(
+                    Thread(
+                        target=self.__download_chunk, args=(
+                            partpath, (lower, upper)), daemon=True))
         else:
             # download with only one thread!
-            partpath = os.path.join(self.partpath, \
-                    f'{self.part_prefix}.part')
+            partpath = os.path.join(self.partpath,
+                                    f'{self.part_prefix}.part')
             self.__partpaths.append(partpath)
-            self.threads.append(Thread(target=self.__download_chunk, \
-                    args=(partpath,), daemon=True))
+            self.threads.append(Thread(target=self.__download_chunk,
+                                       args=(partpath,), daemon=True))
 
+        # this is done as the threads are reverse in order.
         self.__partpaths.reverse()
         self.__prepared = 1
         return True
 
-
     def is_active(self):
-        for th in self.threads:
-            if th.is_alive():
+        """
+        Returns a *bool*:
+            Indicating if downloader is running or not.
+            can be called at any ponit.
+        """
+        for thread_ in self.threads:
+            if thread_.is_alive():
                 return True
         return False
 
-    # this function save given chunk into the part file
-    # if range is not given download the whole range
     def __download_chunk(self, partpath, int_range_=(None, None)):
-        if not None in int_range_:
+        """
+        this function save given chunk into the part file
+        if range is not given download from beginning to the end.
+        """
+        if None not in int_range_:
             lower, upper = int_range_
-            range_ = {'Range':f'bytes={lower}-{upper}'}
+            range_ = {'Range': f'bytes={lower}-{upper}'}
             print(range_)
         else:
             range_ = {}
         req = self.session.get(self.url, headers=range_, stream=True)
-        with open(partpath, 'ab+') as f:
+        with open(partpath, 'ab+') as partfile:
             for data in req.iter_content(chunk_size=4096):
-                len_ = f.write(data)
+                len_ = partfile.write(data)
                 with self.lock:
                     self.done += len_
-                    if self.__killed: return 1
-
+                    if self.__killed:
+                        return 1
+        return 0
 
     def download(self, block=True):
+        """
+        This downloads the given URL.
+        Takes a bool which indicates the blocking status of the downloaded:
+           True: block till finished (or killed)
+           False: run in background
+        Returns a list of threads.
+        """
         if not self.__prepared:
             self.prepare()
 
-        self.__killed =  False # Alive again
-        for th in self.threads:
-            th.start()
+        self.__killed = False  # Alive again
+        for thread_ in self.threads:
+            thread_.start()
 
         if block:
             self.join()
-            return self.threads
-        else:
-            return self.threads
+
+        return self.threads
 
     def join(self):
-        for th in self.threads:
-            th.join()
+        """
+        join all the thread with the main thread.
+        (wait for the download to finish).
+        """
+        for thread_ in self.threads:
+            thread_.join()
 
     def stop(self):
+        """
+        Stop the download process.
+        """
         if self.is_active():
             self.__killed = True
             self.join()
             self.__prepared = 0
 
-
-    def save(self, FilePath):
+    def save(self, filename):
+        """
+        Save the downloaded file to a given path.
+        Must be called after download is finished.
+        """
         if self.is_active():
             raise RuntimeError('Download was active! \
                     Wait for download before calling self.save')
-        elif self.__killed:
+        if self.__killed:
             raise RuntimeError('Download was killed! \
                     complete the download before calling self.save')
-        elif (self.length is not None) and (self.done != self.length):
+        if (self.length is not None) and (self.done != self.length):
             print(self.done, self.length)
             raise ValueError('Incomplete Download! \
                     complete the download before calling self.save')
-        else:
-            w_len = 0
-            with open(FilePath, 'wb') as F:
-                for partpath in self.__partpaths:
-                    with open(partpath, 'rb') as f:
-                        for data in f: w_len += F.write(data)
+        bytes_written = 0
+        with open(filename, 'wb') as finalfile:
+            for partpath in self.__partpaths:
+                with open(partpath, 'rb') as partfile:
+                    for data in partfile:
+                        bytes_written += finalfile.write(data)
 
     def clean(self):
+        """
+        remove all the part files.
+        """
         if self.is_active():
             self.stop()
 
@@ -165,10 +215,10 @@ class Engine():
 
 URL = 'https://google.com'
 URL = 'https://speed.hetzner.de/100MB.bin'
-tmpPath = './Test/'
-UserAgent = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
+TMP_PATH = './Test/'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 
-dl = Engine(URL, tmpPath, UserAgent)
+dl = HttpEngine(URL, TMP_PATH, USER_AGENT)
 print(dl.is_active())
 # dl.prepare()
 dl.clean()
