@@ -3,7 +3,7 @@ This Module contains the download engine for
 `aget` (accelerated wget)
 
 Contains The Following Class:
-    * Engine
+    * HttpEngine
 """
 
 from threading import Thread, Lock
@@ -125,7 +125,6 @@ class HttpEngine():
         if None not in int_range_:
             lower, upper = int_range_
             range_ = {'Range': f'bytes={lower}-{upper}'}
-            print(range_)
         else:
             range_ = {}
         req = self.session.get(self.url, headers=range_, stream=True)
@@ -187,7 +186,6 @@ class HttpEngine():
             raise RuntimeError('Download was killed! \
                     complete the download before calling self.save')
         if (self.length is not None) and (self.done != self.length):
-            print(self.done, self.length)
             raise ValueError('Incomplete Download! \
                     complete the download before calling self.save')
         bytes_written = 0
@@ -211,17 +209,3 @@ class HttpEngine():
 
     def __repr__(self):
         return 'awget Engine: ' + str(self.__dict__)
-
-
-URL = 'https://google.com'
-URL = 'https://speed.hetzner.de/100MB.bin'
-TMP_PATH = './Test/'
-USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
-
-dl = HttpEngine(URL, TMP_PATH, USER_AGENT)
-print(dl.is_active())
-# dl.prepare()
-dl.clean()
-dl.download(True)
-dl.save('100MB.bin')
-# dl.clean()
