@@ -8,7 +8,8 @@ from time import sleep
 from threading import Lock
 from awget import engine
 
-TEST_URL = 'http://www.ovh.net/files/1Gb.dat'
+URL_LIST = ['http://www.ovh.net/files/1Gb.dat', 'http://speedtest.tele2.net/100MB.zip']
+# HASH_LIST = []
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = './TmpEngineTest'
 
@@ -38,6 +39,7 @@ class TestHttpEngine(unittest.TestCase):
         Setup the test
         """
         self.dlr = engine.HttpEngine(TEST_URL, TMP_DIR, USER_AGENT)
+        self.savefile = os.path.join(TMP_DIR, 'savefile')
 
     def tearDown(self):
         self.dlr.clean()
@@ -70,6 +72,7 @@ class TestHttpEngine(unittest.TestCase):
         self.assertEqual(self.dlr.done, 0)
         self.assertEqual(len(self.dlr.threads), 8)
         self.assertEqual(self.dlr.is_active(), False)
+        self.assertIsNotNone(self.dlr.part_prefix)
 
     def test_chukable_download(self):
         """
@@ -81,9 +84,9 @@ class TestHttpEngine(unittest.TestCase):
             partpath = os.path.join(
                 self.dlr.partpath, f'{self.dlr.part_prefix}.{part_number}.part')
             self.assertTrue(os.path.isfile(partpath))
-        self.dlr.save(os.path.join(TMP_DIR, '1Gb.dat'))
+        self.dlr.save(self.savefile)
         # verify hash here
-        os.remove(os.path.join(TMP_DIR, '1Gb.dat'))
+        os.remove(self.savefile)
 
     def test_chunkable_interupt(self):
         """
@@ -100,8 +103,15 @@ class TestHttpEngine(unittest.TestCase):
             self.assertTrue(os.path.isfile(partpath))
 
         with self.assertRaises(RuntimeError) as context:
-            self.dlr.save(os.path.join(TMP_DIR, '1Gb.dat'))
+            self.dlr.save(self.savefile)
             self.assertTrue('Download is killed!' in context.exception)
 
+        self.dlr.download() # download what remains. (will auto prepare)
+        self.dlr.save(self.savefile)
+        self.assertTrue(os.path.isfile(self.savefile))
+        os.remove(self.savefile)
+
 if  __name__ == '__main__':
-    unittest.main()
+    for TEST_URL in URL_LIST:
+        print(TEST_URL)
+        unittest.main()

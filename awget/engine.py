@@ -1,6 +1,6 @@
 """
 This Module contains the download engine for
-`aget` (accelerated wget)
+`awget` (accelerated wget)
 
 Contains The Following Class:
     * HttpEngine
@@ -51,6 +51,8 @@ class HttpEngine():
         returns:
             True after preparation
         """
+        self.threads = []  # clean threads
+        self.done = 0  # clean the counter (imp)
         self.part_prefix = \
             base64.b64encode(md5(self.url.encode()).
                              digest(), b'..').decode('utf-8')
@@ -164,6 +166,7 @@ class HttpEngine():
         """
         for thread_ in self.threads:
             thread_.join()
+        self.session.close()
 
     def stop(self):
         """
@@ -180,14 +183,16 @@ class HttpEngine():
         Must be called after download is finished.
         """
         if self.is_active():
-            raise RuntimeError('Download was active! \
-                    Wait for download before calling self.save')
+            raise RuntimeError(
+                'Download was active! Wait for download before calling self.save')
         if self.__killed:
-            raise RuntimeError('Download was killed! \
-                    complete the download before calling self.save')
+            raise RuntimeError(
+                'Download was killed! complete the download before calling self.save')
         if (self.length is not None) and (self.done != self.length):
-            raise ValueError('Incomplete Download! \
-                    complete the download before calling self.save')
+            raise ValueError(
+                f'Incomplete Download! \
+                        (self.done={self.done}, self.length={self.length}) \
+                        complete the download before calling self.save')
         bytes_written = 0
         with open(filename, 'wb') as finalfile:
             for partpath in self.__partpaths:
