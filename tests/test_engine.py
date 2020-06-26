@@ -9,10 +9,12 @@ from threading import Lock
 from parameterized import parameterized_class
 from awget import engine
 
-URL_LIST = ['http://www.ovh.net/files/1Gb.dat', 'http://speedtest.tele2.net/100MB.zip']
+URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
+            'http://speedtest.tele2.net/100MB.zip']
 HASH_LIST = ['0', '0']
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = './TmpEngineTest'
+
 
 @parameterized_class([
     {"url": URL_LIST[0], "hash_": HASH_LIST[0]},
@@ -24,6 +26,7 @@ class TestHttpEngine(unittest.TestCase):
     """
     url = ""
     hash_ = ""
+
     @classmethod
     def setUpClass(cls):
         """
@@ -85,7 +88,7 @@ class TestHttpEngine(unittest.TestCase):
         """
         Test download with no interupt
         """
-        self.dlr.download() # should auto prepare.
+        self.dlr.download()  # should auto prepare.
         self.assertEqual(self.dlr.is_active(), False)
         for part_number in range(self.dlr.max_conn):
             partpath = os.path.join(
@@ -99,10 +102,10 @@ class TestHttpEngine(unittest.TestCase):
         """
         Make sure the file is downloading (atleast).
         """
-        self.assertEqual(self.dlr.prepare(), True) # can also be manual.
+        self.assertEqual(self.dlr.prepare(), True)  # can also be manual.
         self.dlr.download(False)
         self.assertEqual(self.dlr.is_active(), True)
-        sleep(3) # download for three second
+        sleep(3)  # download for three second
         self.dlr.stop()
         for part_number in range(self.dlr.max_conn):
             partpath = os.path.join(
@@ -113,10 +116,11 @@ class TestHttpEngine(unittest.TestCase):
             self.dlr.save(self.savefile)
             self.assertTrue('Download is killed!' in context.exception)
 
-        self.dlr.download() # download what remains. (will auto prepare)
+        self.dlr.download()  # download what remains. (will auto prepare)
         self.dlr.save(self.savefile)
         self.assertTrue(os.path.isfile(self.savefile))
         os.remove(self.savefile)
 
-if  __name__ == '__main__':
+
+if __name__ == '__main__':
     unittest.main(verbosity=3)

@@ -13,7 +13,7 @@ dlr = HttpEngine(URL, LOCATION, USER_AGENT)
 dlr.prepare()
 dlr.download(False)
 while dlr.is_active():
-    print(round(dlr.done/dlr.length*100, 2), end='\r')
+    print(round(dlr.done / dlr.length * 100, 2), end='\r')
     sleep(0.0167)
 dlr.save("artix-base-runit-20200214-x86_64.iso")
 dlr.clean()
