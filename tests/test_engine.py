@@ -6,23 +6,30 @@ import unittest
 import os
 from time import sleep
 from threading import Lock
+from parameterized import parameterized_class
 from awget import engine
 
 URL_LIST = ['http://www.ovh.net/files/1Gb.dat', 'http://speedtest.tele2.net/100MB.zip']
-# HASH_LIST = []
+HASH_LIST = ['0', '0']
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = './TmpEngineTest'
 
-
+@parameterized_class([
+    {"url": URL_LIST[0], "hash_": HASH_LIST[0]},
+    {"url": URL_LIST[1], "hash_": HASH_LIST[1]},
+])
 class TestHttpEngine(unittest.TestCase):
     """
     Test HttpEngine (/Https).
     """
+    url = ""
+    hash_ = ""
     @classmethod
     def setUpClass(cls):
         """
         Make the required folders.
         """
+        print(f"Testing with url:[{cls.url}](cls.hash_)")
         if not os.path.isdir(TMP_DIR):
             os.mkdir(TMP_DIR)
 
@@ -38,7 +45,7 @@ class TestHttpEngine(unittest.TestCase):
         """
         Setup the test
         """
-        self.dlr = engine.HttpEngine(TEST_URL, TMP_DIR, USER_AGENT)
+        self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT)
         self.savefile = os.path.join(TMP_DIR, 'savefile')
 
     def tearDown(self):
@@ -48,7 +55,7 @@ class TestHttpEngine(unittest.TestCase):
         """
         Test for defult and init values.
         """
-        self.assertEqual(self.dlr.url, TEST_URL)
+        self.assertEqual(self.dlr.url, self.url)
         self.assertEqual(self.dlr.max_conn, 8)
         self.assertEqual(self.dlr.max_tries, 10)
         self.assertEqual(self.dlr.agent, USER_AGENT)
@@ -112,6 +119,4 @@ class TestHttpEngine(unittest.TestCase):
         os.remove(self.savefile)
 
 if  __name__ == '__main__':
-    for TEST_URL in URL_LIST:
-        print(TEST_URL)
-        unittest.main()
+    unittest.main(verbosity=3)
