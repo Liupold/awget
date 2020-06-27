@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  test-engine:
 
     runs-on: ubuntu-latest
     strategy:
