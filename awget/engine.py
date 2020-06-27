@@ -12,6 +12,8 @@ import os
 import base64
 import requests as reqst
 
+BUFF_SIZE = 10485760  # buffer size (to be used while copying)
+
 
 class HttpEngine():
     """
@@ -30,12 +32,12 @@ class HttpEngine():
         self.session = reqst.Session()
         self.session.headers = {'User-Agent': useragent}
         self.done = 0  # done
-        self.chunkable = None  # Will be initialised later
-        self.threads = []
+        self.chunkable = None  # Will be initialized later
+        self.threads = None  # init in prepare
         self.lock = Lock()
         self.__prepared = 0  # Make sure it's prepared.
         self.__killed = False  # threads will check this
-        self.__partpaths = []  # name of all the part files
+        self.__partpaths = None  # name of all the part files (init in prepare)
         self.size = None
         self.part_prefix = None
         self.chunk_size = None
@@ -53,6 +55,7 @@ class HttpEngine():
         """
         self.threads = []  # clean threads
         self.done = 0  # clean the counter (imp)
+        self.__partpaths = []  # name of all the part files
         self.part_prefix = \
             base64.b64encode(md5(self.url.encode()).
                              digest(), b'..').decode('utf-8')
@@ -187,7 +190,7 @@ class HttpEngine():
                 'Download was active! Wait for download before calling self.save')
         if self.__killed:
             raise RuntimeError(
-                'Download was killed! complete the download before calling self.save')
+                'Download was killed! Complete the download before calling self.save')
         if (self.length is not None) and (self.done != self.length):
             raise ValueError(
                 f'Incomplete Download! \
@@ -197,8 +200,14 @@ class HttpEngine():
         with open(filename, 'wb') as finalfile:
             for partpath in self.__partpaths:
                 with open(partpath, 'rb') as partfile:
-                    for data in partfile:
-                        bytes_written += finalfile.write(data)
+                    while True:
+                        buf = partfile.read(BUFF_SIZE)
+                        if not buf:
+                            break
+                        bytes_written += finalfile.write(buf)
+
+        if (self.length is not None) and (bytes_written != self.length):
+            raise ValueError(f"Corrupted file: {filename}")
 
     def clean(self):
         """

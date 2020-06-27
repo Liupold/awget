@@ -10,22 +10,23 @@ from parameterized import parameterized_class
 from awget import engine
 
 URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
-            'http://speedtest.tele2.net/100MB.zip']
-HASH_LIST = ['0', '0']
+            'http://speedtest.tele2.net/100MB.zip',
+            'https://speed.hetzner.de/100MB.bin']
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = './TmpEngineTest'
 
 
 @parameterized_class([
-    {"url": URL_LIST[0], "hash_": HASH_LIST[0]},
-    {"url": URL_LIST[1], "hash_": HASH_LIST[1]},
+    {"url": URL_LIST[0], "savefile": os.path.join(TMP_DIR, '1Gb.dat')},
+    {"url": URL_LIST[1], "savefile": os.path.join(TMP_DIR, '100MB.zip')},
+    {"url": URL_LIST[2], "savefile": os.path.join(TMP_DIR, '100MB.bin')},
 ])
-class TestHttpEngine(unittest.TestCase):
+class TestChunkableHttpEngine(unittest.TestCase):
     """
     Test HttpEngine (/Https).
     """
     url = ""
-    hash_ = ""
+    savefile = ""
 
     @classmethod
     def setUpClass(cls):
@@ -41,22 +42,20 @@ class TestHttpEngine(unittest.TestCase):
         """
         Delete all the tmp files / folders after test.
         """
-        if os.path.isdir(TMP_DIR):
-            os.rmdir(TMP_DIR)
+        return 0
 
     def setUp(self):
         """
         Setup the test
         """
         self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT)
-        self.savefile = os.path.join(TMP_DIR, 'savefile')
 
     def tearDown(self):
         self.dlr.clean()
 
     def test_init(self):
         """
-        Test for defult and init values.
+        Test for default and init values.
         """
         self.assertEqual(self.dlr.url, self.url)
         self.assertEqual(self.dlr.max_conn, 8)
@@ -74,7 +73,7 @@ class TestHttpEngine(unittest.TestCase):
 
     def test_prepare_chunkable(self):
         """
-        Test the prepare methord of HttpEngine
+        Test the prepare method of HttpEngine
         """
         self.assertEqual(self.dlr.prepare(), True)
         self.assertTrue(isinstance(self.dlr.length, int))
@@ -86,7 +85,7 @@ class TestHttpEngine(unittest.TestCase):
 
     def test_chukable_download(self):
         """
-        Test download with no interupt
+        Test download with no interrupt
         """
         self.dlr.download()  # should auto prepare.
         self.assertEqual(self.dlr.is_active(), False)
@@ -94,13 +93,12 @@ class TestHttpEngine(unittest.TestCase):
             partpath = os.path.join(
                 self.dlr.partpath, f'{self.dlr.part_prefix}.{part_number}.part')
             self.assertTrue(os.path.isfile(partpath))
-        self.dlr.save(self.savefile)
-        # verify hash here
-        os.remove(self.savefile)
+        self.dlr.save(self.savefile + ".no_interrupt")
+        self.assertTrue(os.path.isfile(self.savefile + ".no_interrupt"))
 
     def test_chunkable_interupt(self):
         """
-        Make sure the file is downloading (atleast).
+        interrupt test (resume test).
         """
         self.assertEqual(self.dlr.prepare(), True)  # can also be manual.
         self.dlr.download(False)
@@ -113,13 +111,13 @@ class TestHttpEngine(unittest.TestCase):
             self.assertTrue(os.path.isfile(partpath))
 
         with self.assertRaises(RuntimeError) as context:
-            self.dlr.save(self.savefile)
+            self.dlr.save(self.savefile + ".interrupt")
+            self.assertFalse(os.path.isfile(self.savefile + ".interrupt"))
             self.assertTrue('Download is killed!' in context.exception)
 
         self.dlr.download()  # download what remains. (will auto prepare)
-        self.dlr.save(self.savefile)
-        self.assertTrue(os.path.isfile(self.savefile))
-        os.remove(self.savefile)
+        self.dlr.save(self.savefile + ".interrupt")
+        self.assertTrue(os.path.isfile(self.savefile + ".interrupt"))
 
 
 if __name__ == '__main__':
