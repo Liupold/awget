@@ -9,7 +9,6 @@ Contains The Following Class:
 from threading import Thread, Lock
 from hashlib import md5
 import os
-import base64
 import requests as reqst
 
 BUFF_SIZE = 10485760  # buffer size (to be used while copying)
