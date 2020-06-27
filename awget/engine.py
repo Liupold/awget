@@ -10,6 +10,7 @@ from threading import Thread, Lock
 from hashlib import md5
 import os
 import requests as reqst
+from requests.adapters import HTTPAdapter
 
 BUFF_SIZE = 10485760  # buffer size (to be used while copying)
 
@@ -21,11 +22,11 @@ class HttpEngine():
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, url: str, partpath: str, useragent: str,
-                 MaxConnection=8, MaxTries=10):
+                 MaxConnection=8, MaxRetries=10):
         # pylint: disable=too-many-arguments
         self.url = url
         self.max_conn = MaxConnection
-        self.max_tries = MaxTries
+        self.max_retries = MaxRetries
         self.partpath = partpath  # for part files
         self.agent = useragent
         self.session = reqst.Session()
@@ -102,6 +103,7 @@ class HttpEngine():
                                        args=(partpath,), daemon=True))
 
         # this is done as the threads are reverse in order.
+        self.session.mount(self.url, HTTPAdapter(max_retries=self.max_retries))
         self.__partpaths.reverse()
         self.__prepared = 1
         return True

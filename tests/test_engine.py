@@ -60,7 +60,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         """
         self.assertEqual(self.dlr.url, self.url)
         self.assertEqual(self.dlr.max_conn, 8)
-        self.assertEqual(self.dlr.max_tries, 10)
+        self.assertEqual(self.dlr.max_retries, 10)
         self.assertEqual(self.dlr.agent, USER_AGENT)
         self.assertIsNotNone(self.dlr.session)
         self.assertEqual(self.dlr.session.headers, {'User-Agent': USER_AGENT})
