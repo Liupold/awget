@@ -107,10 +107,13 @@ class TestChunkableHttpEngine(unittest.TestCase):
         interrupt test (resume test).
         """
         self.assertEqual(self.dlr.prepare(), True)  # can also be manual.
-        self.dlr.download(False)
-        self.assertEqual(self.dlr.is_active(), True)
-        sleep(0.5)  # download for some time
-        self.dlr.stop()
+        for _ in range(1000):
+            self.dlr.download(False)
+            self.assertTrue(self.dlr.is_active())
+            sleep(0.5)  # download for some time
+            self.dlr.stop()
+            self.assertFalse(self.dlr.is_active())
+
         for part_number in range(self.dlr.max_conn):
             partpath = os.path.join(
                 self.dlr.partpath, f'{self.dlr.part_prefix}.{part_number}.part')
