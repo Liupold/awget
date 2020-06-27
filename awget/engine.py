@@ -56,9 +56,7 @@ class HttpEngine():
         self.threads = []  # clean threads
         self.done = 0  # clean the counter (imp)
         self.__partpaths = []  # clean partpaths (imp)
-        self.part_prefix = \
-            base64.b64encode(md5(self.url.encode()).
-                             digest(), b'..').decode('utf-8')
+        self.part_prefix = md5(self.url.encode()).hexdigest()
 
         req = self.session.get(self.url, stream=True)
 

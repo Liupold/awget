@@ -4,6 +4,7 @@ awget.engine testing module.
 
 import unittest
 import os
+import filecmp
 from time import sleep
 from threading import Lock
 from parameterized import parameterized_class
@@ -13,7 +14,7 @@ URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
             'http://speedtest.tele2.net/100MB.zip',
             'https://speed.hetzner.de/100MB.bin']
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
-TMP_DIR = './TmpEngineTest'
+TMP_DIR = 'tmp-for-awget'
 
 
 @parameterized_class([
@@ -33,7 +34,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         """
         Make the required folders.
         """
-        print(f"Testing with url:[{cls.url}](cls.hash_)")
+        print(f"Testing with url:[{cls.url}]({cls.savefile})")
         if not os.path.isdir(TMP_DIR):
             os.mkdir(TMP_DIR)
 
@@ -97,6 +98,9 @@ class TestChunkableHttpEngine(unittest.TestCase):
             self.assertTrue(os.path.isfile(partpath))
         self.dlr.save(self.savefile + ".no_interrupt")
         self.assertTrue(os.path.isfile(self.savefile + ".no_interrupt"))
+        self.assertTrue(filecmp.cmp(self.savefile + ".no_interrupt",
+                                    self.savefile + ".curl"))
+        os.remove(self.savefile + ".no_interrupt")
 
     def test_chunkable_interupt(self):
         """
@@ -120,6 +124,9 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.dlr.download()  # download what remains. (will auto prepare)
         self.dlr.save(self.savefile + ".interrupt")
         self.assertTrue(os.path.isfile(self.savefile + ".interrupt"))
+        self.assertTrue(filecmp.cmp(self.savefile + ".interrupt",
+                                    self.savefile + ".curl"))
+        os.remove(self.savefile + ".interrupt")
 
 
 if __name__ == '__main__':
