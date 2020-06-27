@@ -86,7 +86,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.assertEqual(self.dlr.is_active(), False)
         self.assertIsNotNone(self.dlr.part_prefix)
 
-    def notest_chukable_download(self):
+    def test_chukable_download(self):
         """
         Test download with no interrupt
         """
