@@ -134,6 +134,16 @@ class TestChunkableHttpEngine(unittest.TestCase):
                                     self.savefile + ".curl"))
         os.remove(self.savefile + ".interrupt")
 
+    def test_custom_split(self):
+        """
+        Specific numbers of download threads. max_conn=(1, 20)
+        """
+        self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT, 1)
+        self.test_chukable_download()
+        self.dlr.clean()
+        self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT, 20)
+        self.dlr.clean()
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
