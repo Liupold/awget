@@ -1,5 +1,6 @@
 """
 awget.engine testing module.
+author: liupold (rohn chatterjee)
 """
 
 import unittest
@@ -7,12 +8,20 @@ import os
 import filecmp
 from time import sleep
 from threading import Lock
+import magic
 from parameterized import parameterized_class
 from awget import engine
 
 URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
             'http://speedtest.tele2.net/100MB.zip',
             'https://speed.hetzner.de/100MB.bin']
+
+# Mainly htmls.
+NON_CHUNK_URL_LIST = [
+        'https://google.com',
+        'https://github.com/liupold',
+        'https://youtube.com/']
+
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = 'tmp-for-awget'
 
@@ -143,6 +152,74 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.dlr.clean()
         self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT, 20)
         self.dlr.clean()
+
+
+@parameterized_class([
+    {"url": NON_CHUNK_URL_LIST[0], "savefile": os.path.join(TMP_DIR, 'google')},
+    {"url": NON_CHUNK_URL_LIST[1], "savefile": os.path.join(TMP_DIR, 'github')},
+    {"url": NON_CHUNK_URL_LIST[2], "savefile": os.path.join(TMP_DIR, 'speedtest')},
+])
+class TestNonChunkableHttpEngine(unittest.TestCase):
+    """
+    Test HttpEngine (/Https).
+    """
+    url = ""
+    savefile = ""
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Make the required folders.
+        """
+        print(f"Testing with url:[{cls.url}]({cls.savefile})")
+        if not os.path.isdir(TMP_DIR):
+            os.mkdir(TMP_DIR)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Delete all the tmp files / folders after test.
+        """
+        return 0
+
+    def setUp(self):
+        """
+        Setup the test
+        """
+        self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT)
+
+    def tearDown(self):
+        self.dlr.clean()  # can be called just after __init__ (without prepare)
+
+    def test_prepare_nonchunkable(self):
+        """
+        Test the prepare method of HttpEngine
+        """
+        self.assertEqual(self.dlr.prepare(), True)
+        # self.assertTrue(isinstance(self.dlr.length, int))
+        self.assertIsNone(self.dlr.chunk_size)
+        self.assertFalse(self.dlr.chunkable)
+        self.assertEqual(self.dlr.done, 0)
+        self.assertTrue(isinstance(self.dlr.threads, list))
+        self.assertEqual(len(self.dlr.threads), 1)
+        self.assertEqual(self.dlr.is_active(), False)
+        self.assertIsNotNone(self.dlr.part_prefix)
+
+    def test_nonchukable_download(self):
+        """
+        Test download with no interrupt
+        """
+        self.dlr.download()  # should auto prepare.
+        self.assertEqual(self.dlr.is_active(), False)
+        partpath = os.path.join(self.dlr.partpath, f'{self.dlr.part_prefix}.part')
+        self.assertTrue(os.path.isfile(partpath))
+        self.dlr.save(self.savefile + ".nonchunkable")
+        self.assertTrue(os.path.isfile(self.savefile + ".nonchunkable"))
+        self.assertEqual(magic.from_file(self.savefile + ".nonchunkable"), \
+                'HTML document, UTF-8 Unicode text, with very long lines')
+        #self.assertTrue(filecmp.cmp(self.savefile + ".nonchunkable",
+        #                            self.savefile + ".curl"))
+        os.remove(self.savefile + ".nonchunkable")
 
 
 if __name__ == '__main__':

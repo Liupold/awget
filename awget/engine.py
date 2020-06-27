@@ -1,9 +1,11 @@
 """
-This Module contains the download engine for
+This Module contains the download engine(s) for
 `awget` (accelerated wget)
 
 Contains The Following Class:
     * HttpEngine
+
+author: liupold(rohn chatterjee)
 """
 
 from threading import Thread, Lock
