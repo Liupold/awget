@@ -52,9 +52,7 @@ class HttpEngine():
         returns:
             True after preparation
         """
-        self.threads = []  # clean threads
         self.done = 0  # clean the counter (imp)
-        self.__partpaths = []  # clean partpaths (imp)
         self.part_prefix = md5(self.url.encode()).hexdigest()
 
         req = self.session.get(self.url, stream=True)
@@ -170,12 +168,14 @@ class HttpEngine():
 
     def stop(self):
         """
-        Stop the download process.
+        Stop the download process. (after stop self.prepare must be called).
         """
         if self.is_active():
             self.__killed = True
             self.join()
-            self.__prepared = 0
+        self.threads = []
+        self.__partpaths = []
+        self.__prepared = 0
 
     def save(self, filename):
         """
