@@ -51,7 +51,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.dlr = engine.HttpEngine(self.url, TMP_DIR, USER_AGENT)
 
     def tearDown(self):
-        self.dlr.clean()
+        self.dlr.clean()  # can be called just after __init__ (without prepare)
 
     def test_init(self):
         """
@@ -65,8 +65,8 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.assertEqual(self.dlr.session.headers, {'User-Agent': USER_AGENT})
         self.assertEqual(self.dlr.done, 0)
         self.assertIsNone(self.dlr.chunkable)
-        self.assertIsNone(self.dlr.size)
         self.assertIsNone(self.dlr.length)
+        self.assertIsNone(self.dlr.chunk_size)
         self.assertEqual(self.dlr.threads, [])
         self.assertIsNone(self.dlr.part_prefix)
         self.assertTrue(isinstance(self.dlr.lock, type(Lock())))
@@ -77,8 +77,10 @@ class TestChunkableHttpEngine(unittest.TestCase):
         """
         self.assertEqual(self.dlr.prepare(), True)
         self.assertTrue(isinstance(self.dlr.length, int))
-        self.assertTrue(isinstance(self.dlr.chunkable, bool))
+        self.assertTrue(isinstance(self.dlr.chunk_size, int))
+        self.assertTrue(self.dlr.chunkable)
         self.assertEqual(self.dlr.done, 0)
+        self.assertTrue(isinstance(self.dlr.threads, list))
         self.assertEqual(len(self.dlr.threads), 8)
         self.assertEqual(self.dlr.is_active(), False)
         self.assertIsNotNone(self.dlr.part_prefix)
@@ -103,7 +105,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         self.assertEqual(self.dlr.prepare(), True)  # can also be manual.
         self.dlr.download(False)
         self.assertEqual(self.dlr.is_active(), True)
-        sleep(3)  # download for three second
+        sleep(0.5)  # download for some time
         self.dlr.stop()
         for part_number in range(self.dlr.max_conn):
             partpath = os.path.join(
@@ -121,4 +123,4 @@ class TestChunkableHttpEngine(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=3)
+    unittest.main(verbosity=2)

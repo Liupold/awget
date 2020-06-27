@@ -33,11 +33,11 @@ class HttpEngine():
         self.session.headers = {'User-Agent': useragent}
         self.done = 0  # done
         self.chunkable = None  # Will be initialized later
-        self.threads = None  # init in prepare
+        self.threads = []
         self.lock = Lock()
         self.__prepared = 0  # Make sure it's prepared.
         self.__killed = False  # threads will check this
-        self.__partpaths = None  # name of all the part files (init in prepare)
+        self.__partpaths = []
         self.size = None
         self.part_prefix = None
         self.chunk_size = None
@@ -55,7 +55,7 @@ class HttpEngine():
         """
         self.threads = []  # clean threads
         self.done = 0  # clean the counter (imp)
-        self.__partpaths = []  # name of all the part files
+        self.__partpaths = []  # clean partpaths (imp)
         self.part_prefix = \
             base64.b64encode(md5(self.url.encode()).
                              digest(), b'..').decode('utf-8')
