@@ -107,10 +107,10 @@ class TestChunkableHttpEngine(unittest.TestCase):
         interrupt test (resume test).
         """
         self.assertEqual(self.dlr.prepare(), True)  # can also be manual.
-        for _ in range(1000):
+        for _ in range(10):
             self.dlr.download(False)
             self.assertTrue(self.dlr.is_active())
-            sleep(0.5)  # download for some time
+            sleep(10)  # download for some time
             self.dlr.stop()
             self.assertFalse(self.dlr.is_active())
 
