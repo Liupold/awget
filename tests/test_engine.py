@@ -18,9 +18,9 @@ URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
 
 # Mainly htmls.
 NON_CHUNK_URL_LIST = [
-        'https://google.com',
-        'https://github.com/liupold',
-        'https://youtube.com/']
+    'https://google.com',
+    'https://youtube.com/',
+    'https://github.com/Liupold/awget.git']
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = 'tmp-for-awget'
@@ -155,23 +155,27 @@ class TestChunkableHttpEngine(unittest.TestCase):
 
 
 @parameterized_class([
-    {"url": NON_CHUNK_URL_LIST[0], "savefile": os.path.join(TMP_DIR, 'google')},
-    {"url": NON_CHUNK_URL_LIST[1], "savefile": os.path.join(TMP_DIR, 'github')},
-    {"url": NON_CHUNK_URL_LIST[2], "savefile": os.path.join(TMP_DIR, 'speedtest')},
+    {"url": NON_CHUNK_URL_LIST[0],
+     "mime": 'text/html'},
+    {"url": NON_CHUNK_URL_LIST[1],
+     "mime": 'text/html'},
+    {"url": NON_CHUNK_URL_LIST[2],
+     "mime": 'application/zip'},
 ])
 class TestNonChunkableHttpEngine(unittest.TestCase):
     """
     Test HttpEngine (/Https).
     """
     url = ""
-    savefile = ""
+    mime = ""
+    savefile = os.path.join(TMP_DIR, 'nonchunkable')
 
     @classmethod
     def setUpClass(cls):
         """
         Make the required folders.
         """
-        print(f"Testing with url:[{cls.url}]({cls.savefile})")
+        print(f"Testing with url:[{cls.url}](mime: {cls.mime})")
         if not os.path.isdir(TMP_DIR):
             os.mkdir(TMP_DIR)
 
@@ -211,15 +215,17 @@ class TestNonChunkableHttpEngine(unittest.TestCase):
         """
         self.dlr.download()  # should auto prepare.
         self.assertEqual(self.dlr.is_active(), False)
-        partpath = os.path.join(self.dlr.partpath, f'{self.dlr.part_prefix}.part')
+        partpath = os.path.join(
+            self.dlr.partpath,
+            f'{self.dlr.part_prefix}.part')
         self.assertTrue(os.path.isfile(partpath))
-        self.dlr.save(self.savefile + ".nonchunkable")
-        self.assertTrue(os.path.isfile(self.savefile + ".nonchunkable"))
-        self.assertEqual(magic.from_file(self.savefile + ".nonchunkable"), \
-                'HTML document, UTF-8 Unicode text, with very long lines')
-        #self.assertTrue(filecmp.cmp(self.savefile + ".nonchunkable",
+        self.dlr.save(self.savefile)
+        self.assertTrue(os.path.isfile(self.savefile))
+        self.assertEqual(magic.from_file(self.savefile, mime=True),
+                         self.mime)
+        # self.assertTrue(filecmp.cmp(self.savefile + ".nonchunkable",
         #                            self.savefile + ".curl"))
-        os.remove(self.savefile + ".nonchunkable")
+        os.remove(self.savefile)
 
 
 if __name__ == '__main__':
