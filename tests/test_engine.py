@@ -20,7 +20,7 @@ URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
 NON_CHUNK_URL_LIST = [
     'https://google.com',
     'https://youtube.com/',
-    'https://github.com/Liupold/awget.git']
+    'https://github.com/Liupold/awget/archive/master.zip']
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = 'tmp-for-awget'
