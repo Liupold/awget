@@ -20,7 +20,7 @@ URL_LIST = ['http://www.ovh.net/files/1Gb.dat',
 NON_CHUNK_URL_LIST = [
     'https://google.com',
     'https://youtube.com/',
-    'https://github.com/Liupold/awget/archive/master.zip']
+    'https://github.com/Liupold/awget']
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'
 TMP_DIR = 'tmp-for-awget'
@@ -160,7 +160,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
     {"url": NON_CHUNK_URL_LIST[1],
      "mime": 'text/html'},
     {"url": NON_CHUNK_URL_LIST[2],
-     "mime": 'application/zip'},
+     "mime": 'text/html'},
 ])
 class TestNonChunkableHttpEngine(unittest.TestCase):
     """
