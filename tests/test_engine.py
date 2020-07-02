@@ -223,8 +223,6 @@ class TestNonChunkableHttpEngine(unittest.TestCase):
         self.assertTrue(os.path.isfile(self.savefile))
         self.assertEqual(magic.from_file(self.savefile, mime=True),
                          self.mime)
-        # self.assertTrue(filecmp.cmp(self.savefile + ".nonchunkable",
-        #                            self.savefile + ".curl"))
         os.remove(self.savefile)
 
 

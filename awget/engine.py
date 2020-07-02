@@ -11,6 +11,7 @@ author: liupold(rohn chatterjee)
 from threading import Thread, Lock
 from hashlib import md5
 import os
+import warnings
 import requests as reqst
 from requests.adapters import HTTPAdapter
 
@@ -46,6 +47,7 @@ class HttpEngine():
         self.length = None
 
     def prepare(self):
+        # pylint: disable=too-many-branches
         """
         This prepare the downloader for download
         - This must be ran before downloading
@@ -92,6 +94,9 @@ class HttpEngine():
                         continue  # do not append to self.threads
                     else:
                         raise RuntimeError("File Corrupted!")
+                elif os.path.exists(partpath):
+                    raise FileExistsError(
+                        f"Directory with the same name {partpath} exist!")
                 self.threads.append(
                     Thread(
                         target=self.__download_chunk, args=(
@@ -100,6 +105,13 @@ class HttpEngine():
             # download with only one thread!
             partpath = os.path.join(self.partpath,
                                     f'{self.part_prefix}.part')
+            if os.path.isfile(partpath):
+                warnings.warn("File exist for not chunk able download \
+                        (will be overwritten)")
+            if os.path.exists(partpath):
+                raise FileExistsError(
+                    f"Directory with the same name {partpath} exist!")
+
             self.__partpaths.append(partpath)
             self.threads.append(Thread(target=self.__download_chunk,
                                        args=(partpath,), daemon=True))
