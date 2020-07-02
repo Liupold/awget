@@ -120,7 +120,7 @@ class HttpEngine():
         self.session.mount(self.url, HTTPAdapter(max_retries=self.max_retries))
         self.__partpaths.reverse()
         self.__prepared = 1
-        return True
+        return req
 
     def is_active(self):
         """
@@ -229,10 +229,9 @@ class HttpEngine():
         if self.is_active():
             self.stop()
 
-        if self.chunk_size is not None:
-            for partpath in self.__partpaths:
-                if os.path.isfile(partpath):
-                    os.remove(partpath)
+        for partpath in self.__partpaths:
+            if os.path.isfile(partpath):
+                os.remove(partpath)
 
     def __repr__(self):
         return 'awget Engine: ' + str(self.__dict__)

@@ -9,6 +9,7 @@ import filecmp
 from time import sleep
 from threading import Lock
 import magic
+from requests import Response
 from parameterized import parameterized_class
 from awget import engine
 
@@ -85,7 +86,7 @@ class TestChunkableHttpEngine(unittest.TestCase):
         """
         Test the prepare method of HttpEngine
         """
-        self.assertEqual(self.dlr.prepare(), True)
+        self.assertTrue(isinstance(self.dlr.prepare(), Response))
         self.assertTrue(isinstance(self.dlr.length, int))
         self.assertTrue(isinstance(self.dlr.chunk_size, int))
         self.assertTrue(self.dlr.chunkable)
@@ -199,7 +200,7 @@ class TestNonChunkableHttpEngine(unittest.TestCase):
         """
         Test the prepare method of HttpEngine
         """
-        self.assertEqual(self.dlr.prepare(), True)
+        self.assertTrue(isinstance(self.dlr.prepare(), Response))
         # self.assertTrue(isinstance(self.dlr.length, int))
         self.assertIsNone(self.dlr.chunk_size)
         self.assertFalse(self.dlr.chunkable)
