@@ -204,7 +204,7 @@ class TestNonChunkableHttpEngine(unittest.TestCase):
             self.dlr.partpath,
             f'{self.dlr.part_prefix}.part')
         self.assertFalse(os.path.isfile(partpath))
-        self.dlr.clean()  # This will do nothing (making sure it can bev called multiple times)
+        self.dlr.clean()  # This will do nothing (making sure it can be called multiple times)
 
     def test_prepare_nonchunkable(self):
         """
