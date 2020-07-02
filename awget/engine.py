@@ -108,7 +108,7 @@ class HttpEngine():
             if os.path.isfile(partpath):
                 warnings.warn("File exist for not chunk able download \
                         (will be overwritten)")
-            if os.path.exists(partpath):
+            elif os.path.exists(partpath):
                 raise FileExistsError(
                     f"Directory with the same name {partpath} exist!")
 
