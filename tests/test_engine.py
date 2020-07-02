@@ -63,6 +63,11 @@ class TestChunkableHttpEngine(unittest.TestCase):
 
     def tearDown(self):
         self.dlr.clean()  # can be called just after __init__ (without prepare)
+        for part_number in range(self.dlr.max_conn):
+            partpath = os.path.join(
+                self.dlr.partpath, f'{self.dlr.part_prefix}.{part_number}.part')
+            self.assertFalse(os.path.isfile(partpath))
+        self.dlr.clean()  # This will do nothing (making sure it can bev called multiple times)
 
     def test_init(self):
         """
@@ -195,6 +200,11 @@ class TestNonChunkableHttpEngine(unittest.TestCase):
 
     def tearDown(self):
         self.dlr.clean()  # can be called just after __init__ (without prepare)
+        partpath = os.path.join(
+            self.dlr.partpath,
+            f'{self.dlr.part_prefix}.part')
+        self.assertFalse(os.path.isfile(partpath))
+        self.dlr.clean()  # This will do nothing (making sure it can bev called multiple times)
 
     def test_prepare_nonchunkable(self):
         """

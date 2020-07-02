@@ -1,9 +1,8 @@
 """
-Basic downloader
+This file is only for experiments
 """
-
 from time import sleep
-from .engine import HttpEngine
+from awget.engine import HttpEngine
 
 URL = "https://github.com/Liupold/awget/archive/master.zip"
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; rv:68.0) Gecko/20100101 Firefox/68.0'

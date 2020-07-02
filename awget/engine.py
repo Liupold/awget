@@ -232,6 +232,8 @@ class HttpEngine():
         for partpath in self.__partpaths:
             if os.path.isfile(partpath):
                 os.remove(partpath)
+                self.__partpaths.remove(partpath)
+                # clean can be called multiple times.
 
     def __repr__(self):
         return 'awget Engine: ' + str(self.__dict__)
