@@ -55,7 +55,7 @@ class HttpEngine():
         - this provide more fine control over the download process.
         *this is blocking by nature.*
         returns:
-            True after preparation
+            req <requests.Response>
         """
         self.done = 0  # clean the counter (imp)
         self.part_prefix = md5(self.url.encode()).hexdigest()
