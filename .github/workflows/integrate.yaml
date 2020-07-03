@@ -8,7 +8,6 @@ on:
 
 jobs:
   test-engine:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,5 +20,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Run test script
-      run: scripts/engine_test.sh
+      run: scripts/test_engine.sh
 
+  test-name_resolver:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Run test script
+      run: scripts/test_name_resolver.sh
