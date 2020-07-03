@@ -70,6 +70,9 @@ class HttpEngine():
         else:
             self.length = None
             self.chunkable = False
+
+        # get initial 2048
+        req.buff_for_mime = req.iter_content(2048).__next__()
         req.close()
 
         if self.chunk_size is not None:
