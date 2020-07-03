@@ -14,7 +14,7 @@ import os
 import warnings
 import requests as reqst
 from requests.adapters import HTTPAdapter
-from awget.helper import open_file
+from .helper import open_file
 
 BUFF_SIZE = 10485760  # buffer size (to be used while copying)
 
@@ -105,7 +105,7 @@ class HttpEngine():
                 self.threads.append(
                     Thread(
                         target=self.__download_chunk, args=(
-                            part_number, (lower, upper)), daemon=True))
+                            partpath, (lower, upper)), daemon=True))
         else:
             # download with only one thread!
             partpath = os.path.join(self.partpath,
@@ -119,7 +119,7 @@ class HttpEngine():
 
             self.__partpaths.append(partpath)
             self.threads.append(Thread(target=self.__download_chunk,
-                                       args=(0,), daemon=True))
+                                       args=(partpath,), daemon=True))
 
         # this is done as the threads are reverse in order.
         self.session.mount(self.url, HTTPAdapter(max_retries=self.max_retries))
@@ -138,7 +138,7 @@ class HttpEngine():
                 return True
         return False
 
-    def __download_chunk(self, part_number, int_range_=(None, None)):
+    def __download_chunk(self, partpath, int_range_=(None, None)):
         """
         this function save given chunk into the part file
         if range is not given download from beginning to the end.
@@ -149,15 +149,14 @@ class HttpEngine():
         else:
             range_ = {}
         req = self.session.get(self.url, headers=range_, stream=True)
-
-        partfile = open_file(self.__partpaths[part_number])
-        for data in req.iter_content(chunk_size=4096):
-            len_ = partfile.write(data)
-            with self.lock:
-                self.done += len_
-                if self.__killed:
-                    break
-        partfile.close()
+        with open(partpath, 'ab+') as partfile:
+            for data in req.iter_content(chunk_size=4096):
+                len_ = partfile.write(data)
+                with self.lock:
+                    self.done += len_
+                    if self.__killed:
+                        return 1
+        return 0
 
     def download(self, block=True):
         """
@@ -216,7 +215,6 @@ class HttpEngine():
                         (self.done={self.done}, self.length={self.length}) \
                         complete the download before calling self.save')
         bytes_written = 0
-
         finalfile = open_file(filename)
         for partpath in self.__partpaths:
             with open(partpath, 'rb') as partfile:
@@ -226,6 +224,7 @@ class HttpEngine():
                         break
                     bytes_written += finalfile.write(buf)
         finalfile.close()
+
         if (self.length is not None) and (bytes_written != self.length):
             raise ValueError(f"Corrupted file: {filename}")
 

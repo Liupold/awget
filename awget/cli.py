@@ -23,11 +23,10 @@ def main():
     dlr.download(False)
     while dlr.is_active():
         if dlr.length is not None:
-            print(round(dlr.done / dlr.length * 100, 2), end='\r')
+            print(round(dlr.done / dlr.length * 100, 2), end='\r', file=sys.stderr)
         sleep(0.0167)
     # dlr.save(guess_file_name(URL, req.headers, dlr.buff))
     dlr.save(sys.stdout.buffer)
-    dlr.clean()
 
 
 if __name__ == '__main__':

@@ -12,5 +12,5 @@ def open_file(file_):
     if isinstance(file_, io.BufferedIOBase):
         return file_
     if isinstance(file_, str):
-        return open(file_, 'wb')
+        return open(file_, 'ab+')
     raise ValueError(f"Unable to understand file: {file_}")
