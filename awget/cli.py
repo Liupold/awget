@@ -5,6 +5,7 @@ Basic downloader
 from time import sleep
 import sys
 from awget.engine import HttpEngine
+import sys
 from awget.name_resolver import guess_file_name
 
 URL = sys.argv[1]
@@ -24,7 +25,8 @@ def main():
         if dlr.length is not None:
             print(round(dlr.done / dlr.length * 100, 2), end='\r')
         sleep(0.0167)
-    dlr.save(guess_file_name(URL, req.headers, req.buff_for_mime))
+    # dlr.save(guess_file_name(URL, req.headers, dlr.buff))
+    dlr.save(sys.stdout.buffer)
     dlr.clean()
 
 
