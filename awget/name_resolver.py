@@ -44,6 +44,8 @@ def improvise_name(url, buff):
     improvise name
     """
     netloc = urlparse(url).netloc
+    if isinstance(netloc, bytes):
+        netloc = netloc.decode()
     timestr = time.strftime("%Y-%b-%d-%H.%M.%S")
     ext = get_extenstion(buff)
     return netloc + '_' + timestr + ext
@@ -65,7 +67,7 @@ def guess_file_name(url=None, headers=None, buff=None):
 
     if buff is not None:
         buff_file_name = improvise_name(url, buff)
-        if header_file_name is not None:
+        if buff_file_name is not None:
             return buff_file_name
 
     return "awget_download-" + time.strftime("%Y-%b-%d-%H.%M.%S")
