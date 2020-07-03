@@ -12,6 +12,7 @@ URL = sys.argv[1]
 USER_AGENT = 'Wget/1.13.4 (linux-gnu)'
 LOCATION = "."
 
+
 def main():
     """
     Entrypoint. (console_script).
@@ -25,6 +26,7 @@ def main():
         sleep(0.0167)
     dlr.save(guess_file_name(URL, req.headers, req.buff_for_mime))
     dlr.clean()
+
 
 if __name__ == '__main__':
     main()
